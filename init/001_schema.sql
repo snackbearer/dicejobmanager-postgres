@@ -5,11 +5,10 @@
 CREATE TABLE material_type
 (
     material_type_id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-    code            VARCHAR(30) NOT NULL,
-    description     VARCHAR(200),
-    created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
 
-    CONSTRAINT uq_material_type_code UNIQUE (code)
+    description TEXT NOT NULL UNIQUE,
+
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
 -------------------------------------------------------------
@@ -19,11 +18,10 @@ CREATE TABLE material_type
 CREATE TABLE production_method
 (
     production_method_id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-    code                 VARCHAR(30) NOT NULL,
-    description          VARCHAR(200),
-    created_at           TIMESTAMPTZ NOT NULL DEFAULT NOW(),
 
-    CONSTRAINT uq_production_method_code UNIQUE (code)
+    description TEXT NOT NULL UNIQUE,
+
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
 -------------------------------------------------------------
@@ -34,7 +32,7 @@ CREATE TABLE material_stock
 (
     material_stock_id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
 
-    colour_name      VARCHAR(100) NOT NULL,
+    colour_name TEXT NOT NULL,
 
     material_type_id BIGINT NOT NULL,
 
@@ -43,6 +41,7 @@ CREATE TABLE material_stock
     is_active BOOLEAN NOT NULL DEFAULT TRUE,
 
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+
     updated_at TIMESTAMPTZ,
 
     CONSTRAINT fk_material_stock_material_type
@@ -57,6 +56,19 @@ CREATE INDEX ix_material_stock_material_type
 ON material_stock(material_type_id);
 
 -------------------------------------------------------------
+-- Job Number Colours
+-------------------------------------------------------------
+
+CREATE TABLE dice_job_number_colour
+(
+    dice_job_number_colour_id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+
+    dice_job_number_colour_name TEXT NOT NULL UNIQUE,
+
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-------------------------------------------------------------
 -- Jobs
 -------------------------------------------------------------
 
@@ -64,7 +76,7 @@ CREATE TABLE dice_job
 (
     dice_job_id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
 
-    job_name VARCHAR(200) NOT NULL,
+    job_name TEXT NOT NULL,
 
     description TEXT,
 
@@ -74,18 +86,19 @@ CREATE TABLE dice_job
 
     production_method_id BIGINT NOT NULL,
 
-    primary_material_stock_id BIGINT,
+    dice_job_number_colour_id BIGINT NOT NULL,
 
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+
     updated_at TIMESTAMPTZ,
 
     CONSTRAINT fk_dice_job_method
         FOREIGN KEY (production_method_id)
         REFERENCES production_method(production_method_id),
 
-    CONSTRAINT fk_dice_job_primary_material
-        FOREIGN KEY (primary_material_stock_id)
-        REFERENCES material_stock(material_stock_id),
+    CONSTRAINT fk_dice_job_number_colour
+        FOREIGN KEY (dice_job_number_colour_id)
+        REFERENCES dice_job_number_colour(dice_job_number_colour_id),
 
     CONSTRAINT chk_colour_count
         CHECK (colour_count > 0)
@@ -94,11 +107,11 @@ CREATE TABLE dice_job
 CREATE INDEX ix_dice_job_method
 ON dice_job(production_method_id);
 
-CREATE INDEX ix_dice_job_material
-ON dice_job(primary_material_stock_id);
+CREATE INDEX ix_dice_job_number_colour
+ON dice_job(dice_job_number_colour_id);
 
 -------------------------------------------------------------
--- Job Colours (Many Colours per Job)
+-- Job Colours
 -------------------------------------------------------------
 
 CREATE TABLE dice_job_colour
